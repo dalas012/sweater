@@ -3,6 +3,7 @@ package com.example.sweater.controller;
 import com.example.sweater.models.Message;
 import com.example.sweater.models.User;
 import com.example.sweater.repos.MessageRepo;
+import com.example.sweater.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +30,9 @@ public class MainController {
 
     @Autowired
     private MessageRepo messageRepo;
+
+    @Autowired
+    UserService userService;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -114,6 +118,10 @@ public class MainController {
 
         Set<Message> messages = user.getMessages();
 
+        model.addAttribute("userChannel", user);
+        model.addAttribute("subscriptionsCount", user.getSubscriptions().size());
+        model.addAttribute("subscribersCount", user.getSubscribers().size());
+        model.addAttribute("isSubscriber", user.getSubscribers().contains(currentUser));
         model.addAttribute("messages", messages);
         model.addAttribute("message", message);
         model.addAttribute("isCurrentUser", currentUser.equals(user));
@@ -143,6 +151,47 @@ public class MainController {
         }
 
         return "redirect:/user-messages/" + user;
+    }
+
+    @GetMapping("subscribe/{user}")
+    public String subscribe(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable User user
+    ) {
+
+        userService.subscribe(currentUser, user);
+
+        return "redirect:/user-messages/" + user.getId();
+    }
+
+    @GetMapping("unsubscribe/{user}")
+    public String unsubscribe(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable User user
+    ) {
+
+        userService.unsubscribe(currentUser, user);
+
+        return "redirect:/user-messages/" + user.getId();
+    }
+
+    @GetMapping("{type}/{user}/list")
+    public String userList(
+            Model model,
+            @PathVariable User user,
+            @PathVariable String type
+    ) {
+
+        model.addAttribute("userChannel", user);
+        model.addAttribute("type", type);
+
+        if ("subscriptions".equals(type)) {
+            model.addAttribute("users", user.getSubscriptions());
+        } else {
+            model.addAttribute("users", user.getSubscribers());
+        }
+
+        return "subscriptions";
     }
 
 }
