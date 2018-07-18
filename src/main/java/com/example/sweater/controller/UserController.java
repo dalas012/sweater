@@ -69,14 +69,6 @@ public class UserController {
         return "redirect:/user/profile";
     }
 
-
-
-
-
-
-
-
-
     @GetMapping("subscribe/{user}")
     public String subscribe(
             @AuthenticationPrincipal User currentUser,
